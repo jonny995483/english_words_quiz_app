@@ -7,7 +7,7 @@ class WordbookScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('나만의 단어장'),
+        title: Center(child: const Text('나만의 단어장')),
       ),
       body: const Center(
         child: Text(

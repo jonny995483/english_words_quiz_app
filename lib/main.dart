@@ -1,7 +1,19 @@
-import 'package:english_words_quiz_app/screens/auth_screen.dart';
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 
-void main() {
+import 'screens/auth_screen.dart';
+import 'services/quiz_state_service.dart';
+import 'services/word_service.dart'; // WordService import
+
+// main 함수를 async로 변경
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 앱 서비스들 초기화
+  await WordService.loadWords();
+  await QuizStateService().init(); // QuizStateService 초기화
+
   runApp(const MyApp());
 }
 
@@ -10,25 +22,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ... 기존 MyApp 코드와 동일 ...
     return MaterialApp(
       title: '나만의 영어 단어장',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // 앱의 기본 색상을 보라색 계열로 설정합니다.
         primarySwatch: Colors.deepPurple,
-        scaffoldBackgroundColor: Colors.deepPurple[50], // 배경색을 연한 보라색으로
+        scaffoldBackgroundColor: Colors.deepPurple[50],
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.deepPurple[600], // 앱바 색상
-          foregroundColor: Colors.white, // 앱바 텍스트 및 아이콘 색상
+          backgroundColor: Colors.deepPurple[600],
+          foregroundColor: Colors.white,
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          selectedItemColor: Colors.deepPurple[700], // 선택된 아이템 색상
-          unselectedItemColor: Colors.grey[500], // 선택되지 않은 아이템 색상
+          selectedItemColor: Colors.deepPurple[700],
+          unselectedItemColor: Colors.grey[500],
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple[400], // 버튼 배경색
-            foregroundColor: Colors.white, // 버튼 텍스트색
+            backgroundColor: Colors.deepPurple[400],
+            foregroundColor: Colors.white,
           ),
         ),
         textTheme: const TextTheme(

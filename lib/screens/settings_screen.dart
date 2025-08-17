@@ -7,7 +7,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('설정 및 계정'),
+        title: Center(child: const Text('설정 및 계정')),
       ),
       body: const Center(
         child: Text(
