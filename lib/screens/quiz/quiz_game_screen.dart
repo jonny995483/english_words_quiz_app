@@ -8,7 +8,12 @@ import '../../models/word.dart';
 
 class QuizGameScreen extends StatefulWidget {
   final List<QuizQuestion> questions;
-  const QuizGameScreen({super.key, required this.questions});
+  final String quizType;
+  const QuizGameScreen({
+    super.key,
+    required this.questions,
+    required this.quizType,
+  });
 
   @override
   State<QuizGameScreen> createState() => _QuizGameScreenState();
@@ -21,12 +26,19 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
   bool _isAnswered = false;
   final List<Word> _wrongWordsInSession = [];
 
-  void _checkAnswer(String selectedMeaning) {
+  void _checkAnswer(String selectedOption) {
     setState(() {
       _isAnswered = true;
-      _selectedOption = selectedMeaning;
-      if (selectedMeaning ==
-          widget.questions[_currentIndex].correctWord.meaning) {
+      _selectedOption = selectedOption;
+
+      String correctAnswer;
+      if (widget.quizType == 'kor_to_eng') {
+        correctAnswer = widget.questions[_currentIndex].correctWord.word;
+      } else {
+        correctAnswer = widget.questions[_currentIndex].correctWord.meaning;
+      }
+
+      if (selectedOption == correctAnswer) {
         _score++;
       } else {
         _wrongWordsInSession.add(widget.questions[_currentIndex].correctWord);
@@ -42,7 +54,6 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
         _selectedOption = null;
       });
     } else {
-      // 퀴즈 종료, 결과 화면으로 이동
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => QuizResultScreen(
@@ -57,7 +68,15 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
 
   Color _getOptionColor(String option) {
     if (!_isAnswered) return Colors.grey.shade200;
-    if (option == widget.questions[_currentIndex].correctWord.meaning) {
+
+    String correctAnswer;
+    if (widget.quizType == 'kor_to_eng') {
+      correctAnswer = widget.questions[_currentIndex].correctWord.word;
+    } else {
+      correctAnswer = widget.questions[_currentIndex].correctWord.meaning;
+    }
+
+    if (option == correctAnswer) {
       return Colors.green.shade200;
     } else if (option == _selectedOption) {
       return Colors.red.shade200;
@@ -72,14 +91,13 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('퀴즈 진행중 (${_currentIndex + 1}/${widget.questions.length})'),
-        automaticallyImplyLeading: false, // 뒤로가기 버튼 숨기기
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 문제 단어
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -87,10 +105,10 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Text(
-                currentQuestion.correctWord.word,
+                currentQuestion.questionText,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 36,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -98,12 +116,11 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
             ),
             const SizedBox(height: 30),
             const Text(
-              '가장 알맞은 뜻을 고르세요.',
+              '가장 알맞은 것을 고르세요.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 18, color: Colors.black54),
             ),
             const SizedBox(height: 20),
-            // 보기 목록
             ...currentQuestion.options.map((option) {
               return Card(
                 color: _getOptionColor(option),
@@ -114,7 +131,6 @@ class _QuizGameScreenState extends State<QuizGameScreen> {
               );
             }).toList(),
             const Spacer(),
-            // 다음 문제 버튼
             if (_isAnswered)
               ElevatedButton(
                 onPressed: _goToNextQuestion,

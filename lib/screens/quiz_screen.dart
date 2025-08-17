@@ -116,6 +116,7 @@ class _QuizScreenState extends State<QuizScreen> {
     return Column(
       children: _quizTypes.map((type) {
         bool isSelected = _selectedQuizType == type['type'];
+        bool isHangman = type['type'] == 'hangman';
         return Card(
           elevation: isSelected ? 6 : 2,
           shape: RoundedRectangleBorder(
@@ -126,16 +127,33 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
           child: ListTile(
-            leading: Icon(type['icon'], color: Colors.deepPurple),
-            title: Text(
-              type['title'],
-              style: const TextStyle(fontWeight: FontWeight.w600),
+            leading: Icon(
+              type['icon'],
+              color: isHangman ? Colors.grey : Colors.deepPurple,
             ),
-            onTap: () {
-              setState(() {
-                _selectedQuizType = type['type'];
-              });
-            },
+            title: Row(
+              children: [
+                Text(
+                  type['title'],
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isHangman ? Colors.grey : Colors.black,
+                  ),
+                ),
+                if (isHangman)
+                  const Text(
+                    ' (준비 중)',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+              ],
+            ),
+            onTap: isHangman
+                ? null
+                : () {
+                    setState(() {
+                      _selectedQuizType = type['type'];
+                    });
+                  },
           ),
         );
       }).toList(),
@@ -158,7 +176,6 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _startQuiz() {
-    // 1. 선택된 난이도에 맞는 단어 리스트 가져오기
     List<Word> sourceWords;
     switch (_selectedLevel) {
       case '초등':
@@ -170,53 +187,64 @@ class _QuizScreenState extends State<QuizScreen> {
       case '전문':
         sourceWords = WordService.highWords;
         break;
-      default: // '전체' 또는 예외 상황
+      default:
         sourceWords = WordService.totalWords;
     }
 
     if (sourceWords.length < 4) {
-      // 퀴즈 생성을 위한 최소 단어 수가 부족할 경우
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('퀴즈를 만들기에 단어 수가 부족합니다.')),
       );
       return;
     }
 
-    // 2. 문제 생성
     final random = Random();
     final List<QuizQuestion> questions = [];
-
-    // 문제로 사용할 단어들을 랜덤으로 섞고 필요한 개수만큼 선택
     final List<Word> quizWords = List.from(sourceWords)..shuffle();
     final int questionCount = _questionCount.toInt();
 
     for (int i = 0; i < questionCount && i < quizWords.length; i++) {
       final correctWord = quizWords[i];
-      final options = <String>{correctWord.meaning}; // 정답 보기를 set에 추가 (중복 방지)
+      String questionText;
+      List<String> options;
 
-      // 오답 보기 생성
-      while (options.length < 4) {
-        final randomWord = sourceWords[random.nextInt(sourceWords.length)];
-        if (randomWord.id != correctWord.id) {
-          options.add(randomWord.meaning);
+      if (_selectedQuizType == 'kor_to_eng') {
+        questionText = correctWord.meaning;
+        final tempOptions = <String>{correctWord.word};
+        while (tempOptions.length < 4) {
+          final randomWord = sourceWords[random.nextInt(sourceWords.length)];
+          if (randomWord.id != correctWord.id) {
+            tempOptions.add(randomWord.word);
+          }
         }
+        options = tempOptions.toList()..shuffle();
+      } else {
+        questionText = correctWord.word;
+        final tempOptions = <String>{correctWord.meaning};
+        while (tempOptions.length < 4) {
+          final randomWord = sourceWords[random.nextInt(sourceWords.length)];
+          if (randomWord.id != correctWord.id) {
+            tempOptions.add(randomWord.meaning);
+          }
+        }
+        options = tempOptions.toList()..shuffle();
       }
-
-      // 보기 순서 섞기
-      final shuffledOptions = options.toList()..shuffle();
 
       questions.add(
         QuizQuestion(
           correctWord: correctWord,
-          options: shuffledOptions,
+          questionText: questionText,
+          options: options,
         ),
       );
     }
 
-    // 3. 퀴즈 게임 화면으로 이동
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => QuizGameScreen(questions: questions),
+        builder: (_) => QuizGameScreen(
+          questions: questions,
+          quizType: _selectedQuizType!,
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 // lib/screens/quiz/quiz_result_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/word.dart';
 import '../../services/quiz_state_service.dart';
@@ -25,15 +26,16 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면이 빌드되자마자 결과 기록
-    _recordResult();
+    // initState에서는 context.read를 직접 호출할 수 없으므로,
+    // 첫 프레임이 빌드된 후에 호출되도록 합니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _recordResult();
+    });
   }
 
   void _recordResult() {
-    final quizState = QuizStateService();
-    // 1. 총 푼 문제 수 기록
+    final quizState = context.read<QuizStateService>();
     quizState.recordQuizSolved(widget.totalQuestions);
-    // 2. 틀린 단어들 저장
     for (final word in widget.wrongWords) {
       quizState.addWrongWord(word);
     }
@@ -81,7 +83,6 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
               padding: const EdgeInsets.all(20.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // 홈 화면으로 돌아가기 (퀴즈 관련 화면 스택 모두 제거)
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 },
                 child: const Text('홈으로 돌아가기'),

@@ -1,20 +1,25 @@
 // lib/main.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'screens/auth_screen.dart';
 import 'services/quiz_state_service.dart';
 import 'services/word_service.dart'; // WordService import
 
-// main 함수를 async로 변경
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 앱 서비스들 초기화
+  final quizStateService = QuizStateService();
   await WordService.loadWords();
-  await QuizStateService().init(); // QuizStateService 초기화
+  await quizStateService.init();
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => quizStateService,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -22,7 +27,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ... 기존 MyApp 코드와 동일 ...
     return MaterialApp(
       title: '나만의 영어 단어장',
       debugShowCheckedModeBanner: false,
