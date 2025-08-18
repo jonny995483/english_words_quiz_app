@@ -10,12 +10,14 @@ class QuizResultScreen extends StatefulWidget {
   final int score;
   final int totalQuestions;
   final List<Word> wrongWords;
+  final List<Word> sessionWords; // 새로 추가: 전체 단어 목록을 받을 변수
 
   const QuizResultScreen({
     super.key,
     required this.score,
     required this.totalQuestions,
     required this.wrongWords,
+    this.sessionWords = const [], // 기본값을 빈 리스트로 설정하여 기존 퀴즈와 호환성 유지
   });
 
   @override
@@ -26,23 +28,30 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
   @override
   void initState() {
     super.initState();
-    // initState에서는 context.read를 직접 호출할 수 없으므로,
-    // 첫 프레임이 빌드된 후에 호출되도록 합니다.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _recordResult();
     });
   }
 
   void _recordResult() {
-    final quizState = context.read<QuizStateService>();
-    quizState.recordQuizSolved(widget.totalQuestions);
-    for (final word in widget.wrongWords) {
-      quizState.addWrongWord(word);
+    // 4지선다 퀴즈의 경우에만 학습 진행도와 틀린 단어를 기록
+    if (widget.sessionWords.isEmpty) {
+      final quizState = context.read<QuizStateService>();
+      quizState.recordQuizSolved(widget.totalQuestions);
+      for (final word in widget.wrongWords) {
+        quizState.addWrongWord(word);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 수정: 어떤 목록을 보여줄지 결정
+    final bool showAllWords = widget.sessionWords.isNotEmpty;
+    final List<Word> wordsToShow =
+        showAllWords ? widget.sessionWords : widget.wrongWords;
+    final String titleText = showAllWords ? '이번 퀴즈 단어 목록' : '틀린 단어';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('퀴즈 결과'),
@@ -62,22 +71,27 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 40),
-            if (widget.wrongWords.isNotEmpty)
-              const Text(
-                '틀린 단어',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            if (wordsToShow.isNotEmpty)
+              Text(
+                titleText,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             Expanded(
-              child: ListView.builder(
-                itemCount: widget.wrongWords.length,
-                itemBuilder: (context, index) {
-                  final word = widget.wrongWords[index];
-                  return ListTile(
-                    title: Text(word.word),
-                    subtitle: Text(word.meaning),
-                  );
-                },
-              ),
+              child: wordsToShow.isEmpty
+                  ? const Center(child: Text('표시할 단어가 없습니다.'))
+                  : ListView.builder(
+                      itemCount: wordsToShow.length,
+                      itemBuilder: (context, index) {
+                        final word = wordsToShow[index];
+                        return ListTile(
+                          title: Text(word.word,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500)),
+                          subtitle: Text(word.meaning),
+                        );
+                      },
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.all(20.0),
@@ -87,8 +101,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                 },
                 child: const Text('홈으로 돌아가기'),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                ),
+                    minimumSize: const Size(double.infinity, 50)),
               ),
             ),
           ],

@@ -2,6 +2,7 @@
 
 import 'dart:math';
 
+import 'package:english_words_quiz_app/screens/quiz/hangman_game_screen.dart';
 import 'package:english_words_quiz_app/screens/quiz/quiz_game_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -32,7 +33,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('퀴즈 설정'),
+        title: Center(child: const Text('퀴즈 풀기')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -99,8 +100,8 @@ class _QuizScreenState extends State<QuizScreen> {
         Slider(
           value: _questionCount,
           min: 5,
-          max: 50,
-          divisions: 9,
+          max: 20, // 행맨은 문제 수를 조금 줄이는 게 좋습니다.
+          divisions: 3,
           label: _questionCount.round().toString(),
           onChanged: (double value) {
             setState(() {
@@ -116,7 +117,6 @@ class _QuizScreenState extends State<QuizScreen> {
     return Column(
       children: _quizTypes.map((type) {
         bool isSelected = _selectedQuizType == type['type'];
-        bool isHangman = type['type'] == 'hangman';
         return Card(
           elevation: isSelected ? 6 : 2,
           shape: RoundedRectangleBorder(
@@ -127,33 +127,14 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
           child: ListTile(
-            leading: Icon(
-              type['icon'],
-              color: isHangman ? Colors.grey : Colors.deepPurple,
-            ),
-            title: Row(
-              children: [
-                Text(
-                  type['title'],
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: isHangman ? Colors.grey : Colors.black,
-                  ),
-                ),
-                if (isHangman)
-                  const Text(
-                    ' (준비 중)',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-              ],
-            ),
-            onTap: isHangman
-                ? null
-                : () {
-                    setState(() {
-                      _selectedQuizType = type['type'];
-                    });
-                  },
+            leading: Icon(type['icon'], color: Colors.deepPurple),
+            title: Text(type['title'],
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            onTap: () {
+              setState(() {
+                _selectedQuizType = type['type'];
+              });
+            },
           ),
         );
       }).toList(),
@@ -191,61 +172,72 @@ class _QuizScreenState extends State<QuizScreen> {
         sourceWords = WordService.totalWords;
     }
 
-    if (sourceWords.length < 4) {
+    // 행맨 게임은 너무 긴 단어는 제외하는 것이 좋습니다. (예: 10자 이하)
+    sourceWords = sourceWords
+        .where((w) => w.word.length <= 10 && !w.word.contains(' '))
+        .toList();
+
+    if (sourceWords.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('퀴즈를 만들기에 단어 수가 부족합니다.')),
+        const SnackBar(content: Text('퀴즈를 만들 단어가 부족합니다.')),
       );
       return;
     }
 
     final random = Random();
-    final List<QuizQuestion> questions = [];
-    final List<Word> quizWords = List.from(sourceWords)..shuffle();
     final int questionCount = _questionCount.toInt();
+    final List<Word> quizWords = List.from(sourceWords)..shuffle();
+    final selectedWords = quizWords.take(questionCount).toList();
 
-    for (int i = 0; i < questionCount && i < quizWords.length; i++) {
-      final correctWord = quizWords[i];
-      String questionText;
-      List<String> options;
+    if (_selectedQuizType == 'hangman') {
+      // 행맨 게임 화면으로 이동
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => HangmanGameScreen(words: selectedWords),
+        ),
+      );
+    } else {
+      // 기존 4지선다 퀴즈 로직
+      final List<QuizQuestion> questions = [];
+      for (int i = 0; i < selectedWords.length; i++) {
+        final correctWord = selectedWords[i];
+        String questionText;
+        List<String> options;
 
-      if (_selectedQuizType == 'kor_to_eng') {
-        questionText = correctWord.meaning;
-        final tempOptions = <String>{correctWord.word};
-        while (tempOptions.length < 4) {
-          final randomWord = sourceWords[random.nextInt(sourceWords.length)];
-          if (randomWord.id != correctWord.id) {
-            tempOptions.add(randomWord.word);
+        if (_selectedQuizType == 'kor_to_eng') {
+          questionText = correctWord.meaning;
+          final tempOptions = <String>{correctWord.word};
+          while (tempOptions.length < 4) {
+            final randomWord = sourceWords[random.nextInt(sourceWords.length)];
+            if (randomWord.id != correctWord.id)
+              tempOptions.add(randomWord.word);
           }
-        }
-        options = tempOptions.toList()..shuffle();
-      } else {
-        questionText = correctWord.word;
-        final tempOptions = <String>{correctWord.meaning};
-        while (tempOptions.length < 4) {
-          final randomWord = sourceWords[random.nextInt(sourceWords.length)];
-          if (randomWord.id != correctWord.id) {
-            tempOptions.add(randomWord.meaning);
+          options = tempOptions.toList()..shuffle();
+        } else {
+          questionText = correctWord.word;
+          final tempOptions = <String>{correctWord.meaning};
+          while (tempOptions.length < 4) {
+            final randomWord = sourceWords[random.nextInt(sourceWords.length)];
+            if (randomWord.id != correctWord.id)
+              tempOptions.add(randomWord.meaning);
           }
+          options = tempOptions.toList()..shuffle();
         }
-        options = tempOptions.toList()..shuffle();
-      }
-
-      questions.add(
-        QuizQuestion(
+        questions.add(QuizQuestion(
           correctWord: correctWord,
           questionText: questionText,
           options: options,
+        ));
+      }
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => QuizGameScreen(
+            questions: questions,
+            quizType: _selectedQuizType!,
+          ),
         ),
       );
     }
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => QuizGameScreen(
-          questions: questions,
-          quizType: _selectedQuizType!,
-        ),
-      ),
-    );
   }
 }

@@ -32,6 +32,7 @@ flutter:
   assets:
     - assets/english_words/
     - assets/icon/
+    - assets/hangman_images/
 
 # --- 여기서부터가 중요합니다 ---
 # flutter: 섹션 밖으로 나와서, 맨 왼쪽부터 시작해야 합니다.
