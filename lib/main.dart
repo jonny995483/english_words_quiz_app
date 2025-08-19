@@ -1,14 +1,19 @@
 // lib/main.dart
 
+import 'package:english_words_quiz_app/widgets/auth_gate.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'screens/auth_screen.dart';
+import 'firebase_options.dart';
 import 'services/quiz_state_service.dart';
 import 'services/word_service.dart'; // WordService import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   final quizStateService = QuizStateService();
   await WordService.loadWords();
@@ -31,11 +36,18 @@ class MyApp extends StatelessWidget {
       title: '나만의 영어 단어장',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        // 이 테마가 앱 전체에 적용됩니다.
         primarySwatch: Colors.deepPurple,
         scaffoldBackgroundColor: Colors.deepPurple[50],
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.deepPurple[600],
           foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
           selectedItemColor: Colors.deepPurple[700],
@@ -55,7 +67,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const AuthScreen(),
+      home: const AuthGate(), // 앱의 첫 화면은 AuthGate
     );
   }
 }
