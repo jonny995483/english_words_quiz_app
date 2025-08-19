@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "788518785608",
+    "project_id": "english-words-quiz-app-5db5a",
+    "storage_bucket": "english-words-quiz-app-5db5a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:788518785608:android:e23e90225184e7bf017e7d",
+        "android_client_info": {
+          "package_name": "com.example.english_words_quiz_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDN5a6LdWzemFRe8Bkm-Vt0lXHYIieLl0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
