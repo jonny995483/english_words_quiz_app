@@ -36,17 +36,17 @@ class MyApp extends StatelessWidget {
       title: '나만의 영어 단어장',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // 이 테마가 앱 전체에 적용됩니다.
         primarySwatch: Colors.deepPurple,
         scaffoldBackgroundColor: Colors.deepPurple[50],
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.deepPurple[600],
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.black87,
           elevation: 0,
           centerTitle: true,
           titleTextStyle: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
           ),
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -57,17 +57,29 @@ class MyApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.deepPurple[400],
             foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
           ),
+        ),
+        // 수정: CardTheme -> CardThemeData 로 클래스 이름을 변경했습니다.
+        cardTheme: CardThemeData(
+          elevation: 4.0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+          color: Colors.white.withOpacity(0.9),
+          // 이전 버전에서는 margin 속성을 지원하지 않으므로 제거합니다.
         ),
         textTheme: const TextTheme(
           headlineSmall: TextStyle(
-            color: Colors.white,
+            color: Colors.black87,
             fontSize: 28,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      home: const AuthGate(), // 앱의 첫 화면은 AuthGate
+      home: const AuthGate(),
     );
   }
 }

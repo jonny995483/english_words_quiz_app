@@ -32,24 +32,51 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Center(child: const Text('퀴즈 풀기')),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildSectionTitle('1. 난이도를 선택하세요'),
-            _buildLevelSelector(),
-            const SizedBox(height: 30),
-            _buildSectionTitle('2. 문제 수를 선택하세요'),
-            _buildCountSelector(),
-            const SizedBox(height: 30),
-            _buildSectionTitle('3. 퀴즈 종류를 선택하세요'),
-            _buildQuizTypeSelector(),
-            const SizedBox(height: 40),
-            _buildStartButton(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.deepPurple.shade200,
+              Colors.deepPurple.shade50,
+            ],
+          ),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              backgroundColor: Colors.deepPurple.shade200.withOpacity(0.5),
+              expandedHeight: 120.0,
+              flexibleSpace: const FlexibleSpaceBar(
+                title: Text('퀴즈 풀기', style: TextStyle(color: Colors.black87)),
+                centerTitle: true,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('1. 난이도를 선택하세요'),
+                    const SizedBox(height: 10),
+                    _buildLevelSelector(),
+                    const SizedBox(height: 30),
+                    _buildSectionTitle('2. 문제 수를 선택하세요'),
+                    const SizedBox(height: 10),
+                    _buildCountSelector(),
+                    const SizedBox(height: 30),
+                    _buildSectionTitle('3. 퀴즈 종류를 선택하세요'),
+                    const SizedBox(height: 10),
+                    _buildQuizTypeSelector(),
+                    const SizedBox(height: 40),
+                    _buildStartButton(),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -59,27 +86,52 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      style: const TextStyle(
+          fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
     );
   }
 
   Widget _buildLevelSelector() {
     return Wrap(
-      spacing: 10.0,
-      runSpacing: 10.0,
+      spacing: 12.0,
+      runSpacing: 12.0,
       children: _levels.map((level) {
-        return ChoiceChip(
-          label: Text(level, style: const TextStyle(fontSize: 16)),
-          selected: _selectedLevel == level,
-          onSelected: (selected) {
+        final isSelected = _selectedLevel == level;
+        return InkWell(
+          onTap: () {
             setState(() {
-              _selectedLevel = selected ? level : null;
+              _selectedLevel = level;
             });
           },
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          selectedColor: Colors.deepPurple[300],
-          labelStyle: TextStyle(
-            color: _selectedLevel == level ? Colors.white : Colors.black,
+          borderRadius: BorderRadius.circular(15.0),
+          child: Card(
+            elevation: isSelected ? 8.0 : 2.0,
+            color: isSelected ? Colors.deepPurple[400] : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15.0),
+              side: isSelected
+                  ? BorderSide(color: Colors.deepPurple.shade700, width: 2)
+                  : BorderSide.none,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isSelected)
+                    const Icon(Icons.check_circle,
+                        color: Colors.white, size: 20),
+                  if (isSelected) const SizedBox(width: 8),
+                  Text(level,
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: isSelected ? Colors.white : Colors.black87,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal)),
+                ],
+              ),
+            ),
           ),
         );
       }).toList(),
@@ -87,29 +139,36 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Widget _buildCountSelector() {
-    return Column(
-      children: [
-        Text(
-          '${_questionCount.toInt()} 문제',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.deepPurple[700],
-          ),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Column(
+          children: [
+            Text(
+              '${_questionCount.toInt()} 문제',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple[700],
+              ),
+            ),
+            Slider(
+              value: _questionCount,
+              min: 5,
+              max: 20,
+              divisions: 3,
+              label: _questionCount.round().toString(),
+              activeColor: Colors.deepPurple.shade400,
+              inactiveColor: Colors.deepPurple.shade100,
+              onChanged: (double value) {
+                setState(() {
+                  _questionCount = value;
+                });
+              },
+            ),
+          ],
         ),
-        Slider(
-          value: _questionCount,
-          min: 5,
-          max: 20, // 행맨은 문제 수를 조금 줄이는 게 좋습니다.
-          divisions: 3,
-          label: _questionCount.round().toString(),
-          onChanged: (double value) {
-            setState(() {
-              _questionCount = value;
-            });
-          },
-        ),
-      ],
+      ),
     );
   }
 
@@ -118,18 +177,27 @@ class _QuizScreenState extends State<QuizScreen> {
       children: _quizTypes.map((type) {
         bool isSelected = _selectedQuizType == type['type'];
         return Card(
-          elevation: isSelected ? 6 : 2,
+          elevation: isSelected ? 8.0 : 2.0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(15.0),
             side: BorderSide(
-              color: isSelected ? Colors.deepPurple : Colors.transparent,
-              width: 2,
+              color:
+                  isSelected ? Colors.deepPurple.shade400 : Colors.transparent,
+              width: 2.5,
             ),
           ),
           child: ListTile(
-            leading: Icon(type['icon'], color: Colors.deepPurple),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            leading: Icon(type['icon'],
+                color: isSelected ? Colors.deepPurple.shade700 : Colors.grey,
+                size: 30),
             title: Text(type['title'],
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 18,
+                    color: Colors.black87)),
             onTap: () {
               setState(() {
                 _selectedQuizType = type['type'];
@@ -146,17 +214,15 @@ class _QuizScreenState extends State<QuizScreen> {
     return ElevatedButton(
       onPressed: isReady ? _startQuiz : null,
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        minimumSize: const Size(double.infinity, 50),
+        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       ),
       child: const Text('퀴즈 시작!'),
     );
   }
 
   void _startQuiz() {
+    // 1. 선택된 난이도에 맞는 단어 리스트 가져오기
     List<Word> sourceWords;
     switch (_selectedLevel) {
       case '초등':
@@ -172,32 +238,48 @@ class _QuizScreenState extends State<QuizScreen> {
         sourceWords = WordService.totalWords;
     }
 
-    // 행맨 게임은 너무 긴 단어는 제외하는 것이 좋습니다. (예: 10자 이하)
-    sourceWords = sourceWords
-        .where((w) => w.word.length <= 10 && !w.word.contains(' '))
-        .toList();
-
-    if (sourceWords.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('퀴즈를 만들 단어가 부족합니다.')),
-      );
-      return;
+    // 2. 버그 수정: 더욱 상세해진 단어 수 검사 로직
+    // 4지선다형은 최소 4개, 행맨은 최소 1개의 단어가 필요합니다.
+    bool canStartQuiz = true;
+    if (_selectedQuizType == 'hangman') {
+      // 행맨용 단어 필터링 (너무 길거나 공백 있는 단어 제외)
+      sourceWords = sourceWords
+          .where((w) => w.word.length <= 10 && !w.word.contains(' '))
+          .toList();
+      if (sourceWords.isEmpty) {
+        canStartQuiz = false;
+      }
+    } else {
+      // 4지선다형 퀴즈
+      if (sourceWords.length < 4) {
+        canStartQuiz = false;
+      }
     }
 
+    // 3. 퀴즈를 시작할 수 없다면 사용자에게 알림을 보여주고 함수 종료
+    if (!canStartQuiz) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('선택하신 난이도의 단어 수가 부족하여 퀴즈를 만들 수 없습니다.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return; // 여기서 함수가 종료되어 더 이상 진행되지 않음
+    }
+
+    // 4. 퀴즈 문제 생성 및 화면 이동
     final random = Random();
     final int questionCount = _questionCount.toInt();
     final List<Word> quizWords = List.from(sourceWords)..shuffle();
     final selectedWords = quizWords.take(questionCount).toList();
 
     if (_selectedQuizType == 'hangman') {
-      // 행맨 게임 화면으로 이동
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => HangmanGameScreen(words: selectedWords),
         ),
       );
     } else {
-      // 기존 4지선다 퀴즈 로직
       final List<QuizQuestion> questions = [];
       for (int i = 0; i < selectedWords.length; i++) {
         final correctWord = selectedWords[i];

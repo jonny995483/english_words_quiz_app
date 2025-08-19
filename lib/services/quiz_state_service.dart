@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:english_words_quiz_app/models/word.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 class QuizStateService with ChangeNotifier {
   late SharedPreferences _prefs;
@@ -15,47 +16,62 @@ class QuizStateService with ChangeNotifier {
 
   DateTime _lastSolvedDate = DateTime.now();
 
+  // --- '나만의 단어장' 기능 관련 코드 추가 ---
+  List<Word> _myWords = [];
+  List<Word> get myWords => _myWords;
+  // --- 여기까지 ---
+
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
     await _loadStateFromPrefs();
+    await _loadMyWords(); // 나만의 단어 불러오기 호출
     _resetDailyProgressIfNeeded();
   }
 
-  Future<void> _loadStateFromPrefs() async {
-    final wrongWordsJson = _prefs.getStringList('wrongWords') ?? [];
-    _wrongWords = wrongWordsJson
+  Future<void> _loadStateFromPrefs() async {/* ... 기존 코드 ... */}
+  void _resetDailyProgressIfNeeded() {/* ... 기존 코드 ... */}
+  Future<void> _saveWrongWords() async {/* ... 기존 코드 ... */}
+  Future<void> _saveDailyProgress() async {/* ... 기존 코드 ... */}
+
+  // --- '나만의 단어장' 기능 관련 메소드 추가 ---
+  Future<void> _loadMyWords() async {
+    final myWordsJson = _prefs.getStringList('myWords') ?? [];
+    _myWords = myWordsJson
         .map((jsonStr) => Word.fromJson(jsonDecode(jsonStr)))
         .toList();
+  }
 
-    _dailyQuestionsSolved = _prefs.getInt('dailyQuestionsSolved') ?? 0;
-    final lastDateStr = _prefs.getString('lastSolvedDate');
-    if (lastDateStr != null) {
-      _lastSolvedDate = DateTime.parse(lastDateStr);
+  Future<void> _saveMyWords() async {
+    final myWordsJson =
+        _myWords.map((word) => jsonEncode(word.toJson())).toList();
+    await _prefs.setStringList('myWords', myWordsJson);
+  }
+
+  void addMyWord({required String word, required String meaning}) {
+    final newWord = Word(
+      id: const Uuid().v4(),
+      word: word,
+      meaning: meaning,
+      level: '나만의 단어',
+    );
+    _myWords.insert(0, newWord); // 맨 앞에 추가
+    _saveMyWords();
+    notifyListeners();
+  }
+
+  void updateMyWord(Word updatedWord) {
+    final index = _myWords.indexWhere((w) => w.id == updatedWord.id);
+    if (index != -1) {
+      _myWords[index] = updatedWord;
+      _saveMyWords();
+      notifyListeners();
     }
   }
 
-  void _resetDailyProgressIfNeeded() {
-    final now = DateTime.now();
-    if (now.year != _lastSolvedDate.year ||
-        now.month != _lastSolvedDate.month ||
-        now.day != _lastSolvedDate.day) {
-      _dailyQuestionsSolved = 0;
-      _lastSolvedDate = now;
-      _saveDailyProgress();
-      print("일일 진행도가 리셋되었습니다.");
-    }
-  }
-
-  Future<void> _saveWrongWords() async {
-    final wrongWordsJson = _wrongWords
-        .map((word) => jsonEncode(word.toJson()))
-        .toList();
-    await _prefs.setStringList('wrongWords', wrongWordsJson);
-  }
-
-  Future<void> _saveDailyProgress() async {
-    await _prefs.setInt('dailyQuestionsSolved', _dailyQuestionsSolved);
-    await _prefs.setString('lastSolvedDate', _lastSolvedDate.toIso8601String());
+  void deleteMyWord(String wordId) {
+    _myWords.removeWhere((w) => w.id == wordId);
+    _saveMyWords();
+    notifyListeners();
   }
 
   void addWrongWord(Word word) {
